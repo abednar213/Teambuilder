@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teambildung – 5. Klassen</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e0ddd6;
+    --text: #1a1916;
+    --text2: #6b6860;
+    --accent: #2d6a4f;
+    --accent-light: #e8f4ee;
+    --accent-text: #1b4332;
+    --danger: #a32d2d;
+    --danger-light: #fcebeb;
+    --warn: #854f0b;
+    --warn-light: #faeeda;
+    --radius: 10px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
+  header p { color: var(--text2); font-size: 0.9rem; margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card h2 { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.75rem; }
+
+  .input-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
+  .input-group label { font-size: 0.78rem; color: var(--text2); }
+  .input-group input { width: 80px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: var(--surface); color: var(--text); }
+
+  textarea {
+    width: 100%; height: 200px; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Menlo', 'Consolas', monospace; font-size: 0.82rem;
+    background: var(--surface2); color: var(--text);
+    resize: vertical; line-height: 1.6;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+  .hint { font-size: 0.78rem; color: var(--text2); margin-top: 6px; }
+  .hint code { background: var(--surface2); padding: 1px 5px; border-radius: 4px; font-size: 0.76rem; }
+
+  .btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+  button {
+    padding: 8px 18px; border-radius: 7px; font-size: 0.88rem; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); transition: background 0.12s, transform 0.08s;
+  }
+  button:hover { background: var(--surface2); }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { background: var(--accent-text); border-color: var(--accent-text); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .stat { background: var(--surface2); border-radius: 8px; padding: 12px 14px; }
+  .stat .label { font-size: 0.75rem; color: var(--text2); margin-bottom: 4px; }
+  .stat .value { font-size: 1.4rem; font-weight: 600; }
+
+  .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+  .team-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem;
+  }
+  .team-card h3 {
+    font-size: 0.78rem; font-weight: 600; color: var(--text2);
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .team-card h3 span {
+    background: var(--accent-light); color: var(--accent-text);
+    font-size: 0.7rem; padding: 2px 7px; border-radius: 20px;
+    font-weight: 500; letter-spacing: 0; text-transform: none;
+  }
+  .team-card ul { list-style: none; }
+  .team-card li { font-size: 0.85rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .team-card li:last-child { border-bottom: none; }
+  .tag { font-size: 0.7rem; color: var(--text2); margin-left: 5px; }
+
+  .queue-item { font-size: 0.85rem; padding: 7px 10px; border-radius: 7px; margin-bottom: 6px; }
+  .queue-item.ok { background: var(--accent-light); color: var(--accent-text); }
+  .queue-item.remaining { background: var(--warn-light); color: var(--warn); }
+
+  #error {
+    background: var(--danger-light); color: var(--danger);
+    border: 1px solid #f0bbbb; border-radius: 8px;
+    padding: 10px 14px; font-size: 0.88rem;
+    margin-bottom: 1rem; display: none;
+  }
+
+  #results { display: none; }
+  .section-title { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎓 Teambildung – 5. Klassen</h1>
+    <p>Schülernamen einfügen, Teams per Round-Robin bilden und als Textdatei exportieren.</p>
+  </header>
+
+  <div class="card">
+    <h2>Schülerliste</h2>
+    <div class="input-row">
+      <div class="input-group">
+        <label for="teamSize">Teamgröße</label>
+        <input type="number" id="teamSize" value="12" min="2" max="50">
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="bildeTeams()">▶ Teams bilden</button>
+        <button onclick="neuMischen()" id="btnMischen" disabled>🔀 Neu mischen</button>
+        <button onclick="exportieren()" id="btnExport" disabled>⬇ teams.txt</button>
+      </div>
+    </div>
+    <textarea id="eingabe">Nachname;Vorname;Klasse
+Müller;Max;5a
+Schmidt;Anna;5b
+Weber;Leon;5a
+Fischer;Lena;5c
+Meyer;Tom;5b
+Wagner;Emma;5c
+Bauer;Felix;5a
+Hoffmann;Mia;5b
+Koch;Paul;5c
+Becker;Lea;5a
+Schulz;Jonas;5b
+Richter;Sophie;5c
+Klein;Lukas;5a
+Wolf;Hannah;5b
+Schröder;Finn;5c
+Neumann;Laura;5a
+Zimmermann;Ben;5b
+Braun;Clara;5c
+Krause;Noah;5a
+Lange;Julia;5b
+Hartmann;Elias;5c
+Werner;Marie;5a
+Schmitt;David;5b
+Meier;Sarah;5c</textarea>
+  <!-- NEU: -->
+<div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+  <input type="checkbox" id="zufaellig" checked>
+  <label for="zufaellig" class="hint" style="margin: 0;">Zufällig mischen</label>
+  <span class="hint" style="margin: 0;">– Format: <code>Nachname;Vorname;Klasse</code>, Kopfzeile optional</span>
+</div>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="results">
+    <div class="stats" id="stats"></div>
+    <p class="section-title">Teams</p>
+    <div class="teams-grid" id="teamsGrid"></div>
+    <div class="card" style="margin-top: 1rem;">
+      <h2>Queue-Status</h2>
+      <div id="queueStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let letzteKlassen = null;
+  let letzteTeams = null;
+  let letzteQueues = null;
+
+  function zeigeError(msg) {
+    const el = document.getElementById('error');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function parseEingabe(text) {
+    const zeilen = text.trim().split('\n').map(z => z.trim()).filter(Boolean);
+    const nachKlasse = {};
+    for (let i = 0; i < zeilen.length; i++) {
+      const teile = zeilen[i].split(';').map(t => t.trim());
+      if (teile.length < 3) continue;
+      const [nachname, vorname, klasse] = teile;
+      if (i === 0 && nachname.toLowerCase() === 'nachname') continue;
+      if (!nachKlasse[klasse]) nachKlasse[klasse] = [];
+      nachKlasse[klasse].push({ nachname, vorname, klasse });
+    }
+    return nachKlasse;
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+	// NEU:
+   function erstelleQueues(nachKlasse) {
+		const zufaellig = document.getElementById('zufaellig').checked;
+		const q = {};
+		for (const klasse of Object.keys(nachKlasse).sort()) {
+		  q[klasse] = zufaellig ? shuffle(nachKlasse[klasse]) : [...nachKlasse[klasse]];
+		}
+		return q;
+    }
+
+  function bildeTeamsAusQueues(queues, teamSize) {
+    const qCopy = {};
+    for (const k in queues) qCopy[k] = [...queues[k]];
+
+    const klassen = Object.keys(qCopy);
+    const teams = [];
+    let cycleIdx = 0;
+
+    const gesamt = () => klassen.reduce((s, k) => s + qCopy[k].length, 0);
+
+    while (gesamt() >= teamSize) {
+      const team = [];
+      let versuche = 0;
+      while (team.length < teamSize) {
+        const k = klassen[cycleIdx % klassen.length];
+        cycleIdx++;
+        if (qCopy[k].length > 0) {
+          team.push(qCopy[k].shift());
+        }
+        versuche++;
+        if (versuche > klassen.length * teamSize * 2) break;
+      }
+      if (team.length === teamSize) teams.push(team);
+      else break;
+    }
+
+    return { teams, restQueues: qCopy };
+  }
+
+  function rendereErgebnis(teams, queues) {
+    letzteTeams = teams;
+    letzteQueues = queues;
+
+    const zugeteilt = teams.reduce((s, t) => s + t.length, 0);
+    const uebrig = Object.values(queues).reduce((s, q) => s + q.length, 0);
+
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><div class="label">Teams gebildet</div><div class="value">${teams.length}</div></div>
+      <div class="stat"><div class="label">Schüler in Teams</div><div class="value">${zugeteilt}</div></div>
+      <div class="stat"><div class="label">Nicht zugeteilt</div><div class="value">${uebrig}</div></div>
+    `;
+
+    document.getElementById('teamsGrid').innerHTML = teams.map((team, i) => {
+      const sortiert = [...team].sort((a, b) => a.klasse.localeCompare(b.klasse));
+      const items = sortiert.map(s =>
+        `<li>${s.vorname} ${s.nachname}<span class="tag">${s.klasse}</span></li>`
+      ).join('');
+      return `<div class="team-card">
+        <h3>Team ${i + 1} <span>${team.length} SuS</span></h3>
+        <ul>${items}</ul>
+      </div>`;
+    }).join('');
+
+    document.getElementById('queueStatus').innerHTML = Object.entries(queues).map(([klasse, q]) => {
+      if (q.length === 0)
+        return `<div class="queue-item ok">✓ ${klasse} – alle zugeteilt</div>`;
+      const namen = q.map(s => `${s.vorname} ${s.nachname}`).join(', ');
+      return `<div class="queue-item remaining">⚠ ${klasse} (${q.length} übrig): ${namen}</div>`;
+    }).join('');
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('btnMischen').disabled = false;
+    document.getElementById('btnExport').disabled = false;
+  }
+
+  function bildeTeams() {
+    zeigeError('');
+    const text = document.getElementById('eingabe').value;
+    const teamSize = parseInt(document.getElementById('teamSize').value, 10);
+
+    if (!text.trim()) { zeigeError('Bitte zuerst Schülerdaten einfügen.'); return; }
+    if (isNaN(teamSize) || teamSize < 2) { zeigeError('Teamgröße muss mindestens 2 sein.'); return; }
+
+    const nachKlasse = parseEingabe(text);
+    if (Object.keys(nachKlasse).length === 0) {
+      zeigeError('Keine gültigen Daten gefunden. Bitte Format prüfen: Nachname;Vorname;Klasse');
+      return;
+    }
+
+    letzteKlassen = nachKlasse;
+    const queues = erstelleQueues(nachKlasse);
+    const { teams, restQueues } = bildeTeamsAusQueues(queues, teamSize);
+
+    if (teams.length === 0) {
+      zeigeError(`Nicht genug Schüler für ein Team der Größe ${teamSize}.`);
+      return;
+    }
+
+    rendereErgebnis(teams, restQueues);
+  }
+
+  function neuMischen() {
+    if (!letzteKlassen) return;
+    const teamSize = parseInt(document.getElementById('teamSize').value, 10);
+    const queues = erstelleQueues(letzteKlassen);
+    const { teams, restQueues } = bildeTeamsAusQueues(queues, teamSize);
+    rendereErgebnis(teams, restQueues);
+  }
+
+  function exportieren() {
+    if (!letzteTeams) return;
+    const zeilen = [];
+    letzteTeams.forEach((team, i) => {
+      const sortiert = [...team].sort((a, b) => a.klasse.localeCompare(b.klasse));
+      zeilen.push(`Team ${i + 1}:`);
+      sortiert.forEach(s => zeilen.push(`  ${s.vorname} ${s.nachname} (${s.klasse})`));
+      zeilen.push('');
+    });
+    zeilen.push('── Queue-Status ──');
+    Object.entries(letzteQueues).forEach(([klasse, q]) => {
+      if (q.length > 0)
+        zeilen.push(`${klasse} (${q.length} übrig): ${q.map(s => `${s.vorname} ${s.nachname}`).join(', ')}`);
+      else
+        zeilen.push(`${klasse}: leer ✓`);
+    });
+
+    const blob = new Blob([zeilen.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'teams.txt'; a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
