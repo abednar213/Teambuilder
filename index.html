@@ -90,16 +90,33 @@
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 1rem;
   }
+  .team-card.lila  { background: #f3eeff; border-color: #c9b0f0; }
+  .team-card.gelb  { background: #fffbe6; border-color: #f0d860; }
+  .team-card.gruen { background: #eafaf1; border-color: #7dcea0; }
+  .team-card.rot   { background: #fdecea; border-color: #f0a0a0; }
+  .team-card.blau  { background: #e8f4fd; border-color: #90c8f0; }
+
   .team-card h3 {
     font-size: 0.78rem; font-weight: 600; color: var(--text2);
     letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;
     display: flex; justify-content: space-between; align-items: center;
   }
+  .team-card.lila  h3 { color: #6b21a8; }
+  .team-card.gelb  h3 { color: #854f0b; }
+  .team-card.gruen h3 { color: #1b5e34; }
+  .team-card.rot   h3 { color: #a32d2d; }
+  .team-card.blau  h3 { color: #1a4a7a; }
+
   .team-card h3 span {
     background: var(--accent-light); color: var(--accent-text);
     font-size: 0.7rem; padding: 2px 7px; border-radius: 20px;
     font-weight: 500; letter-spacing: 0; text-transform: none;
   }
+  .team-card.lila  h3 span { background: #e9d8fd; color: #6b21a8; }
+  .team-card.gelb  h3 span { background: #fef9c3; color: #854f0b; }
+  .team-card.gruen h3 span { background: #d1fae5; color: #1b5e34; }
+  .team-card.rot   h3 span { background: #fee2e2; color: #a32d2d; }
+  .team-card.blau  h3 span { background: #dbeafe; color: #1a4a7a; }
   .team-card ul { list-style: none; }
   .team-card li { font-size: 0.85rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
   .team-card li:last-child { border-bottom: none; }
@@ -131,8 +148,8 @@
     <h2>Schülerliste</h2>
     <div class="input-row">
       <div class="input-group">
-        <label for="teamSize">Teamgröße</label>
-        <input type="number" id="teamSize" value="12" min="2" max="50">
+        <label for="teamSize">Anzahl Teams</label>
+        <input type="number" id="teamSize" value="5" min="1" max="50">
       </div>
       <div class="btn-row">
         <button class="primary" onclick="bildeTeams()">▶ Teams bilden</button>
@@ -230,33 +247,43 @@ Meier;Sarah;5c</textarea>
 		return q;
     }
 
-  function bildeTeamsAusQueues(queues, teamSize) {
+  function bildeTeamsAusQueues(queues, anzahlTeams) {
     const qCopy = {};
     for (const k in queues) qCopy[k] = [...queues[k]];
 
     const klassen = Object.keys(qCopy);
-    const teams = [];
-    let cycleIdx = 0;
 
-    const gesamt = () => klassen.reduce((s, k) => s + qCopy[k].length, 0);
-
-    while (gesamt() >= teamSize) {
-      const team = [];
-      let versuche = 0;
-      while (team.length < teamSize) {
-        const k = klassen[cycleIdx % klassen.length];
-        cycleIdx++;
+    // Schritt 1: Alle SuS in echter Round-Robin-Reihenfolge in eine Liste ziehen
+    const alleGeordnet = [];
+    let nochVorhanden = true;
+    while (nochVorhanden) {
+      nochVorhanden = false;
+      for (const k of klassen) {
         if (qCopy[k].length > 0) {
-          team.push(qCopy[k].shift());
+          alleGeordnet.push(qCopy[k].shift());
+          nochVorhanden = true;
         }
-        versuche++;
-        if (versuche > klassen.length * teamSize * 2) break;
       }
-      if (team.length === teamSize) teams.push(team);
-      else break;
     }
 
-    return { teams, restQueues: qCopy };
+    // Schritt 2: Gleichmäßig auf Teams aufteilen
+    const gesamtSchueler = alleGeordnet.length;
+    const basis = Math.floor(gesamtSchueler / anzahlTeams);
+    const rest = gesamtSchueler % anzahlTeams;
+    const teamGroessen = Array.from({ length: anzahlTeams }, (_, i) => basis + (i < rest ? 1 : 0));
+
+    const teams = [];
+    let idx = 0;
+    for (const groesse of teamGroessen) {
+      teams.push(alleGeordnet.slice(idx, idx + groesse));
+      idx += groesse;
+    }
+
+    // Leere restQueues zurückgeben (alle wurden verteilt)
+    const restQueues = {};
+    for (const k of klassen) restQueues[k] = [];
+
+    return { teams, restQueues };
   }
 
   function rendereErgebnis(teams, queues) {
@@ -272,13 +299,18 @@ Meier;Sarah;5c</textarea>
       <div class="stat"><div class="label">Nicht zugeteilt</div><div class="value">${uebrig}</div></div>
     `;
 
+    const teamFarben = ['lila', 'gelb', 'gruen', 'rot', 'blau'];
+    const teamNamen  = ['Lila', 'Gelb', 'Grün', 'Rot', 'Blau'];
+
     document.getElementById('teamsGrid').innerHTML = teams.map((team, i) => {
       const sortiert = [...team].sort((a, b) => a.klasse.localeCompare(b.klasse));
+      const farbe = teamFarben[i % teamFarben.length];
+      const name  = teamNamen[i % teamNamen.length];
       const items = sortiert.map(s =>
         `<li>${s.vorname} ${s.nachname}<span class="tag">${s.klasse}</span></li>`
       ).join('');
-      return `<div class="team-card">
-        <h3>Team ${i + 1} <span>${team.length} SuS</span></h3>
+      return `<div class="team-card ${farbe}">
+        <h3>Team ${name} <span>${team.length} SuS</span></h3>
         <ul>${items}</ul>
       </div>`;
     }).join('');
@@ -301,7 +333,7 @@ Meier;Sarah;5c</textarea>
     const teamSize = parseInt(document.getElementById('teamSize').value, 10);
 
     if (!text.trim()) { zeigeError('Bitte zuerst Schülerdaten einfügen.'); return; }
-    if (isNaN(teamSize) || teamSize < 2) { zeigeError('Teamgröße muss mindestens 2 sein.'); return; }
+    if (isNaN(teamSize) || teamSize < 1) { zeigeError('Anzahl Teams muss mindestens 1 sein.'); return; }
 
     const nachKlasse = parseEingabe(text);
     if (Object.keys(nachKlasse).length === 0) {
@@ -314,7 +346,7 @@ Meier;Sarah;5c</textarea>
     const { teams, restQueues } = bildeTeamsAusQueues(queues, teamSize);
 
     if (teams.length === 0) {
-      zeigeError(`Nicht genug Schüler für ein Team der Größe ${teamSize}.`);
+      zeigeError(`Nicht genug Schüler für ${teamSize} Teams.`);
       return;
     }
 
@@ -331,10 +363,11 @@ Meier;Sarah;5c</textarea>
 
   function exportieren() {
     if (!letzteTeams) return;
+    const teamNamen = ['Lila', 'Gelb', 'Grün', 'Rot', 'Blau'];
     const zeilen = [];
     letzteTeams.forEach((team, i) => {
       const sortiert = [...team].sort((a, b) => a.klasse.localeCompare(b.klasse));
-      zeilen.push(`Team ${i + 1}:`);
+      zeilen.push(`Team ${teamNamen[i % teamNamen.length]}:`);
       sortiert.forEach(s => zeilen.push(`  ${s.vorname} ${s.nachname} (${s.klasse})`));
       zeilen.push('');
     });
